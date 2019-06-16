@@ -92,6 +92,77 @@ class FutureChainTest extends AsyncFlatSpec {
     }
   }
 
+  it should "Be able to retry the function until success" in {
+    var counter = 0
+    val expectedCounter = 1000
+    FutureChain.futureChain(_ => Future {
+      1
+    })
+      .andThenRetryUntilSuccess(_ => Future {
+        counter += 1
+        if (counter < expectedCounter) throw new MyTestException
+        counter
+      }).run().map(result => assert(result == expectedCounter))
+  }
+
+  it should "Be able to retry the function until success if number of max retries is not reached" in {
+    var counter = 0
+    val expectedCounter = 1000
+    FutureChain.futureChain(_ => Future {
+      1
+    })
+      .andThenRetryUntilSuccess(_ => Future {
+        counter += 1
+        if (counter < expectedCounter) throw new MyTestException
+        counter
+      }, Some(1000)).run().map(result => assert(result == expectedCounter))
+  }
+
+  it should "Be able to give up retrying the function if it doesn't suceeds in specified number of tries" in {
+    var counter = 0
+    val expectedCounter = 1000
+    recoverToSucceededIf[MyTestException] {
+      FutureChain.futureChain(_ => Future {
+        1
+      })
+        .andThenRetryUntilSuccess(_ => Future {
+          counter += 1
+          if (counter < expectedCounter) throw new MyTestException
+          counter
+        }, Some(999)).run()
+    }
+  }
+
+  it should "Fail on first try if maximum number of tries is 0" in {
+    var counter = 0
+    val expectedCounter = 2
+    recoverToSucceededIf[MyTestException] {
+      FutureChain.futureChain(_ => Future {
+        1
+      })
+        .andThenRetryUntilSuccess(_ => Future {
+          counter += 1
+          if (counter < expectedCounter) throw new MyTestException
+          counter
+        }, Some(0)).run()
+    }
+  }
+
+  it should "Fail on first try if maximum number of tries is negative" in {
+    var counter = 0
+    val expectedCounter = 2
+    recoverToSucceededIf[MyTestException] {
+      FutureChain.futureChain(_ => Future {
+        1
+      })
+        .andThenRetryUntilSuccess(_ => Future {
+          counter += 1
+          if (counter < expectedCounter) throw new MyTestException
+          counter
+        }, Some(-1)).run()
+    }
+  }
+
   behavior of "Three functions FutureChain"
 
   it should "Return the immediate result of a third function that converts int to float and then to string" in {

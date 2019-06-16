@@ -37,6 +37,20 @@ trait ChainElement[T] {
   }
 
   /**
+    * Adds a new element to the future chain, that will be executed again and again until it suceeds.
+    *
+    * @note This may lead to an infinite loop. Use with care.
+    * @param cbk      Element to be added to the chain. Should return a Future object.
+    * @param maxTries How many tries should it attempt before giving up and failing the Future with the last
+    *                 encountered Throwable
+    * @tparam U Type returned by the object to be added, as enclosed in Future.
+    * @return Last element in the future chain.
+    */
+  def andThenRetryUntilSuccess[U](cbk: T => Future[U], maxTries: Option[Int] = None): ChainElement[U] = {
+    new RetryingChainElement(this, cbk, maxTries)
+  }
+
+  /**
     * To be reimplemented by the chain element classes.
     *
     * @return Result of the chain element execution in the Future.
