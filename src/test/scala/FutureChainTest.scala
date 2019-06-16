@@ -107,6 +107,17 @@ class FutureChainTest extends AsyncFlatSpec {
       .run().map({ result => assert(result === "1.0") })
   }
 
+  it should "Allow to be mixed with synchronous functions" in {
+    FutureChain.futureChain(_ => Future {
+      1
+    })
+      .andThenSync((i: Int) => i.toFloat)
+      .andThen((i: Float) => Future {
+        i.toString
+      })
+      .run().map({ result => assert(result === "1.0") })
+  }
+
   it should "Return operations in order" in {
     FutureChain.futureChain(_ => Future {
       Thread.sleep(10); 4

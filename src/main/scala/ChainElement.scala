@@ -10,7 +10,11 @@ trait ChainElement[T] {
   }
 
   def andThen[U](cbk: T => Future[U]): ChainElement[U] = {
-    new NextChainElement[T, U, this.type](this, cbk)
+    new AsynchronousChainElement[T, U, this.type](this, cbk)
+  }
+
+  def andThenSync[U](cbk: T => U): ChainElement[U] = {
+    new SynchronousChainElement[T, U, this.type](this, cbk)
   }
 
   protected def _run(): Future[T]
