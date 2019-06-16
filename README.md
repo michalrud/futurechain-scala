@@ -17,11 +17,14 @@ do this in other languages I know.
 ## Usage example
 
 ```scala
-import scala.concurrent.Future
+import scala.concurrent.{Future, Await}
+import scala.concurrent.duration.Duration.Inf
 import scala.concurrent.ExecutionContext.Implicits.global
 
-FutureChain.futureChain(_ => Future{1})
+val futureResult = FutureChain.futureChain(_ => Future{1})
     .andThen((v: Int) => Future(v.toString))
     .andThenSync((v: String) => s"Value is $v")
     .run()
+
+println(Await.result(futureResult, atMost = Inf))
 ```
